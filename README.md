@@ -1,8 +1,8 @@
 # ENTREGAS
 
-<a href="https://github.com/lospibesdeindustrial/TP1_2022"> TRABAJO PRACTICO N°1</a>
+<a href="https://github.com/lospibesdeindustrial/TP1_2022" target="_blank"> TRABAJO PRACTICO N°1</a>
 
-<a href="https://github.com/lospibesdeindustrial/TP2_2022"> TRABAJO PRACTICO N°2</a>
+<a href="https://github.com/lospibesdeindustrial/TP2_2022" target="_blank"> TRABAJO PRACTICO N°2</a>
 
 # Materia
 Técnicas y Herramientas Modernas 1
