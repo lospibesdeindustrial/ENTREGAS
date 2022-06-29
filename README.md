@@ -6,6 +6,8 @@
 
 <a href="https://drive.google.com/uc?export=download&id=1cPMVikIwNed6OxNyl9oOuuklJOzw-t6U"> INFORME FINAL CURSO DE PROGRAMACIÓN EN R</a>
 
+<a href="https://drive.google.com/uc?export=download&id=1XgsN_JMlKCLIDqwJftuVL1zJVJ11BSKd"> INFORME FINAL SEMINARIO DE INFRAESTRUCTURAS CRÍTICAS</a>
+
 # Materia
 Técnicas y Herramientas Modernas 1
 
