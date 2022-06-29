@@ -4,7 +4,7 @@
 
 <a href="https://github.com/lospibesdeindustrial/TP2_2022" target="_blank"> TRABAJO PRACTICO N°2</a>
 
-<a href="https://drive.google.com/uc?export=download&id=1LUEYElpJnRJwAP2HxPgKngLc_Fnvh_NO"> INFORME FINAL CURSO DE PROGRAMACIÓN EN R</a>
+<a href="https://drive.google.com/uc?export=download&id=1cPMVikIwNed6OxNyl9oOuuklJOzw-t6U"> INFORME FINAL CURSO DE PROGRAMACIÓN EN R</a>
 
 # Materia
 Técnicas y Herramientas Modernas 1
