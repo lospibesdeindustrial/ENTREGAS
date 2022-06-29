@@ -1,0 +1,338 @@
+---
+title: "Tecnicas y Herramientas Modernas I - Curso de Programación en R"
+author:
+  - name: Nicolas Roman Farina Lorenzo
+    email: nicofarina1323@gmail.com
+    affiliation: Universidad Nacional de Cuyo
+    correspondingauthor: true
+    footnote: 1
+  - name: Juan Manuel Aspee
+    email: juanaspeerobert14@gmail.com
+    affiliation: Universidad Nacional de Cuyo
+  - name: Joaquien Costa
+    email: joacosta010@gmail.com
+    affiliation: Universidad Nacional de Cuyo
+    footnote: 2
+  - name: Lucas Romero
+    email: lucasromero_5@hotmail.com
+    affiliation: Universidad Nacional de Cuyo
+    footnote: 2
+address:
+  - code: Universidad Nacional de Cuyo
+    address: Centro Universitario, M5500 Mendoza
+footnote:
+  - code: 1
+    text: "Este es el informe final del modulo R."
+  - code: 2
+    text: "Esperemos les guste :)."
+abstract: |
+  En este Informe se describirán diferentes herramientas para medir el rendimiento de un código, además de varios metodos numéricos e implementaciones interesantes de código para simulacion de situaciones de la vida real.
+keywords: 
+  - rendimiento
+  - performance
+  - codigo
+journal: "GitHub"
+date: "`r Sys.Date()`"
+classoption: preprint, 3p, authoryear
+bibliography: mybibfile.bib
+linenumbers: false
+numbersections: true
+# Use a CSL with `citation_package = "default"`
+# csl: https://www.zotero.org/styles/elsevier-harvard
+output: 
+  rticles::elsevier_article:
+    keep_tex: true
+    citation_package: natbib
+---
+
+# [**MÉTODOS PARA MEDIR RENDIMIENTO DE CÓDIGO EN R:**]{.underline}
+
+A continuación se detallan algunas bibliotecas que utilizaremos a lo largo del informe para medir el rendimiento de nuestros códigos:
+
+## [**MÉTODO SYS.TIME**]{.underline}
+
+Este es un método muy simple y flexible de usar que viene preinstalado en R, aun así, tiene algunas desventajas en su implementación (tardaremos mucho en compilar un PDF o una presentación que contenga dicho método). Nos dejara medir el rendimiento de código a través de los registros del RTC (Real Time Clock) de la computadora. Un ejemplo podría ser el siguiente:
+
+```{r}
+duermete_un_minuto <- function() { Sys.sleep(5) }
+start_time <- Sys.time()
+duermete_un_minuto()
+end_time <- Sys.time()
+end_time - start_time
+```
+
+Podemos ver que se mide el tiempo de ejecución de la función duérmete un minuto encerrando la linea que la ejecuta entre el encendido y el apagado del método sys.time.
+
+## [**MÉTODO TICTOC**]{.underline}
+
+Este es un metodo que debe ser instalado aparte a traves del instalador de paquetes del programa RStudio ya que no viene de forma predeterminada en la instalacion de R. Este metodo proviene de las bibliotecas de Octave/Matlab y ofrece las mismas capacidades que sys.time con algunas comodidades extra. Un ejemplo de uso de tictoc podria ser:
+
+```{r}
+library(tictoc) #importamos el metodo
+tic("sleeping")
+A<-20
+print("dormire una siestita...")
+Sys.sleep(2)
+print("...suena el despertador")
+toc()
+```
+
+Lo bueno del modulo tictoc es que nos permite medir el rendimiento de solo un fragmento del codigo y no todo.
+
+## [**MÉTODO RBENCHMARK**]{.underline}
+
+Este metodo podria decirse que es una version mejorada del metodo sys.time (se autodescribe como "un simple contenedor alrededor de system.time"). Un ejemplo de este podria ser:
+
+```{r}
+library(rbenchmark)
+# lm crea una regresi?n lineal
+benchmark("lm" = {
+X <- matrix(rnorm(1000), 100, 10)
+y <- X %*% sample(1:10, 10) + rnorm(100)
+b <- lm(y ~ X + 0)$coef
+},
+"pseudoinverse" = {
+X <- matrix(rnorm(1000), 100, 10)
+y <- X %*% sample(1:10, 10) + rnorm(100)
+b <- solve(t(X) %*% X) %*% t(X) %*% y
+},
+"linear system" = {
+X <- matrix(rnorm(1000), 100, 10)
+y <- X %*% sample(1:10, 10) + rnorm(100)
+b <- solve(t(X) %*% X, t(X) %*% y)
+},
+replications = 1000,
+columns = c("test", "replications", "elapsed",
+"relative", "user.self", "sys.self"))
+
+```
+
+La ejecucion de este metodo para medir rendimientos nos provee de una tabla comparativa entre tiempos de uso de diferentes fragmentos de codigo.
+
+## [**MÉTODO MICROBENCHMARK**]{.underline}
+
+Este metodo ofrece muchas comodidades y funcionalidades adicionales (a pesar de estar en estado beta). Se destaca en microbenchmark la posibilidad de poder graficar el rendimiento de diferentes partes de codigo (o codigos distintos) en diagramas de violin. El siguiente ejemplo demuestra esto:
+
+```{r}
+library(microbenchmark)
+set.seed(2017)
+n <- 10000
+p <- 100
+X <- matrix(rnorm(n*p), n, p)
+y <- X %*% rnorm(p) + rnorm(100)
+check_for_equal_coefs <- function(values) {
+tol <- 1e-12
+max_error <- max(c(abs(values[[1]] - values[[2]]),
+abs(values[[2]] - values[[3]]),
+abs(values[[1]] - values[[3]])))
+max_error < tol
+}
+mbm <- microbenchmark("lm" = { b <- lm(y ~ X + 0)$coef },
+"pseudoinverse" = {
+b <- solve(t(X) %*% X) %*% t(X) %*% y
+},
+"linear system" = {
+b <- solve(t(X) %*% X, t(X) %*% y)
+},
+check = check_for_equal_coefs)
+mbm
+library(ggplot2)
+autoplot(mbm)
+```
+
+# [**RESOLUCIÓN DE CONSIGNAS DEL MÓDULO**]{.underline}
+
+## [**Ejercicio N°1 - Generar un vector secuencia**]{.underline}
+
+En este ejercicio se compararan los rendimientos de dos codigos (uno usando el metodo FOR y otro usando el metodo nativo de R para secuencias: seq) con la misma finalidad: generar un vector secuencia de valores (en este caso desde el 2 hasta el 100.000 con un salto entre valores de 2). Se utilizara el metodo sys.time para medir los rendimientos de cada uno por separado.
+
+### SECUENCIAS GENERADAS CON "FOR"
+
+```{r}
+#SECUENCIAS GENERADAS CON FOR
+A<-c()
+start_time <- Sys.time()
+
+for (i in 1:100000) { A[i] <- (i*2)}
+head (A)#MUESTRA LOS PRIMEROS VALORES DE A
+tail(A)#MUESTRA LOS ULTIMOS VALORES DE A
+
+end_time <- Sys.time()
+end_time - start_time
+
+```
+
+### SECUENCIAS GENERADAS CON "SEQ"
+
+```{r}
+#SECUENCIAS GENERADAS CON R
+
+start_time <- Sys.time()
+
+A <- seq(2,100000, 2)
+head (A)
+tail(A)
+
+end_time <- Sys.time()
+end_time - start_time
+```
+
+Para ambos metodos, al final de su ejecucion podemos observar los primeros y ultimos valores del vector secuencia A y el tiempo que se tardo en ejecutar el codigo. Notamos que el metodo integrado en R "seq" es notoriamente mas rapido que "for" debido a que es un metodo optimizado para hacer secuencias unicamente.
+
+## [**Ejercicio N°2 - Implementación de una Serie Fibonacci**]{.underline}
+
+Una serie de Fibonacci es tal que comienza con 0 y 1, los siguientes valores de la serie se calculan como la suma de los dos numeros anteriores.
+
+### Definición Matemática Recurrente:
+
+Esta es la ecuacion caracteristica de la Serie de Fibonacci: $$ 
+  f_{0} = 0
+$$ $$ 
+  f_{1} = 1
+$$ $$ 
+  f_{n+1} = f_{n} + f_{n-1}
+$$ Los primeros terminos de la serie son: 0, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987, 1.597, 2.584, 4.181, 6.765, 10.946, 17.711, 28.657, 46.368, ...
+
+En este ejercicio se vera cuantas iteraciones se necesitan para generar un número de la serie mayor que 1.000.000. Ademas mediremos el rendimiento del codigo a traves del uso de la biblioteca tictoc.
+
+```{r}
+library(tictoc)
+
+tic()
+
+f1<-0
+f2<-1
+N<-0
+vec<- c(f1,f2)
+f3<-0
+
+while(f3 <= 1000000) {
+  
+  N<-(N+1)
+  f3<- f1 + f2
+  vec<- c(vec,f3)
+  
+  f1<- f2
+  f2<- f3
+  
+}
+
+N
+vec
+toc()
+```
+
+A traves del valor del ultimo valor que adquiere N podemos observar que se necesitan 30 iteraciones minimamente antes de superar el valor 1000000.
+
+## [**Ejercicio N°3 - Ordenación de un vector por método burbuja**]{.underline}
+
+En esta consigna compararemos dos codigos a traves del metodo microbenchmark, ambos con la finalidad de ordenar una lista de menor a mayor. El primero a analizar sera el metodo de Ordenmiento Directo u Ordenacion Burbuja (Bubble Sort en inglés), mientras que el segundo sera un metodo nativo de R que realiza el mismo fin, "sort". Ademas y gracias a microbenchmark, podremos graficar los tiempos de implementacion de los dos codigos.
+
+Para hacer las pruebas tomaremos una muestra de 50 numeros aleatorios entre 1 y 20000.
+
+```{r}
+library(microbenchmark)
+
+
+# Tomo una muestra de 10 números ente 1 y 100
+x<-sample(1:20000,50)
+x# lo ponemos para ver la lista creada
+# Creo una funcion para ordenar
+
+mbm<- microbenchmark(
+  #METODO ORDENAMIENTO DIRECTO
+  "burbuja" = {
+    
+  burbuja <- function(x){
+  n<-length(x)
+  for(j in 1:(n-1)){
+    for(i in 1:(n-j)){
+      if(x[i]>x[i+1]){
+        temp<-x[i]
+        x[i]<-x[i+1]
+        x[i+1]<-temp
+      }
+    }
+  }
+  return(x)
+}
+res<-burbuja(x)  
+    
+  }, #Termina el metodo de ordenamiento directo en el vector mbm
+
+
+#METODO R
+"sort"= {
+  
+  sort(x)
+  
+} #Termina el metodo R
+)
+
+sort(x) #lo ponemos solo para ver la lista ordenada
+
+mbm
+library(ggplot2)#importamos la biblioteca de graficos
+autoplot(mbm)#graficamos los rendimientos
+
+```
+
+Por el grafico podemos observar que el metodo burbuja es menos eficaz que el metodo nativo de R (esto se debe otra vez debido a que este ultimo ha sido optimizado para esta tarea mientras que el otro es un codigo creado a mano por nosotros para realizar la tarea). El grafico de sort() esta mas a la izquierda indicando un menor tiempo de comienzo de realizacion de la tarea y tambien termina antes que el de Ordemiento Directo, el cual no solo comienza despues sino que se prolonga mas a lo largo del tiempo debido a las multiples comparaciones que debe ejecutar para ordenar los numeros.
+
+## [**Ejercicio N°4 - Progresión geométrica del COVid-19**]{.underline}
+
+En este ejercicio utilizaremos un modelo matematico para determinar como se expande un virus en una pandemia. Usaremos los datos publicos subidos a internet de casos en Argentina. Determinaremos en que fecha se contagiaran 40 millones de personas.
+
+Utilizaremos un factor de contagio F=1.62 y una poblacion contagiada activa inicial de 51778 personas (extraido de la pagina oficial del ministerio de salud).
+
+```{r}
+f1<- 51778
+f2<- 0
+N<- 0
+vec<- c(f1)
+F <- 1.62
+
+while(f2 <= 40000000) {
+  
+  N<-(N+1)
+  f2<- F*f1
+  vec<- c(vec,f2)
+  
+  f1<- f2
+  
+}
+
+N
+vec
+```
+
+Por el valor de N, el virus tardara 14 dias en infectar a 40 millones de personas.
+
+### [**Importar datos de archivo .csv y graficar**]{.underline}
+
+Con esta seccion aprederemos a importar datos de un archivo .csv y luego operar con ellos. Importaremos el archivo oficial de registro de contagios de covid-19 en la pandemia en Argentina, "casos.csv" (el cual esta subido a la pagina de la catedra). Lo descargaremos y ubicaremos en la carpeta "Descargas" de nuestra computadora. Para importarlo deberemos seguir los siguientes pasos:
+
+1.  Seleccionar "File"--\> "Import Dataset"--\>"From Text (readr)".
+
+2.  Con el boton "Browse" ubicaremos el archivo en nuestra computadora y lo cargaremos.
+
+3.  En la seccion "Delimiter" tendremos que seleccionar "Semicolon".
+
+4.  Daremos click en "Import" para importar.
+
+5.  Para invocarlo en nuestro codigo deberemos ejecutar el siguiente codigo:
+
+    ```{r}
+
+    library(readr)
+    casos <- read_delim("C:/Users/Nico/Downloads/casos.csv",
+    delim = ";", escape_double = FALSE, col_types = cols(`Covid Argentina` = col_date(format = "%m/%d/%Y")),
+    trim_ws = TRUE)
+
+    ```
+
+Para poder graficar los contagiados al pasar de las semanas debremos ejecutar un comando tipo "plot", nativo de R:
+
+```{r}
+plot(casos$...2, main="Contagio 2020", ylab="Casos positivos", xlab="Semanas")
+```
